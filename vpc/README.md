@@ -14,7 +14,7 @@ aws_subnet_private_az | ca-central-1b
 
 ## Example usage
 Create a module in a root file. Example below:
-
+```
 module "vpc" {
   source = "git::github.com:dechiad1/infrastructure-modules.git//vpc?ref=master"
 
@@ -25,3 +25,4 @@ module "vpc" {
   aws_subnet_private_cidr_block = "${var.aws_subnet_private_cidr_block}"
   aws_subnet_private_az = "${var.aws_subnet_private_az}"
 }
+```
