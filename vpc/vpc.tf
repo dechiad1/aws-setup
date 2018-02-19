@@ -101,7 +101,7 @@ resource "aws_security_group" "public" {
 	description = "security group for public access"
 	vpc_id      = "${aws_vpc.main.id}"
 	
-	/* ingress & egress for all traffic of instances within the same sg */		
+	/* ingress for all traffic of instances within the same sg */		
 	ingress {
 		from_port = 0
 		to_port   = 0
@@ -161,26 +161,8 @@ resource "aws_security_group_rule" "public-to-private-ingress" {
 	source_security_group_id = "${aws_security_group.private.id}"	
 }
 
-resource "aws_security_group_rule" "public-to-private-egress" {
-	type      = "egress"
-	from_port = 0
-	to_port   = 0
-	protocol  = -1
-	security_group_id        = "${aws_security_group.public.id}"
-	source_security_group_id = "${aws_security_group.private.id}"
-}
-
 resource "aws_security_group_rule" "private-to-public-ingress" {
 	type      = "ingress"
-	from_port = 0
-	to_port   = 0
-	protocol  = -1
-	security_group_id        = "${aws_security_group.private.id}"
-	source_security_group_id = "${aws_security_group.public.id}"
-}
-
-resource "aws_security_group_rule" "private-to-public-egress" {
-	type      = "egress"
 	from_port = 0
 	to_port   = 0
 	protocol  = -1
