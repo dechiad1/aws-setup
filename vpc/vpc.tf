@@ -65,8 +65,13 @@ resource "aws_subnet" "private-subnet" {
 
 resource "aws_route_table" "private-rt" {
     vpc_id = "${aws_vpc.main.id}"
-
-    tags {
+		
+		route {
+    	cidr_block = "0.0.0.0/0"
+    	gateway_id = "${aws_nat_gateway.nat-gw.id}"
+    }
+		
+		tags {
         Name = "Private Subnet"
     }
 }
@@ -81,7 +86,7 @@ resource "aws_eip" "nat" {
     depends_on = ["aws_internet_gateway.main-ig"]
 }
 
-resource "aws_nat_gateway" "nat_gw" {
+resource "aws_nat_gateway" "nat-gw" {
     allocation_id = "${aws_eip.nat.id}"
     subnet_id     = "${aws_subnet.public-subnet.id}"
 }
@@ -104,28 +109,21 @@ resource "aws_security_group" "public" {
 		self = true
 	}
 	
-	egress {
-		from_port = 0
-		to_port   = 0
-		protocol  = -1
-		self      = true
-	}
-	
-/* access into the public subnet */
-	
+  /* access into the public subnet */
 	ingress {
 		from_port   = 22
 		to_port     = 22
 		protocol    = "tcp"
 		cidr_blocks = ["${var.aws_inbound_ip_list}"]
 	}
-
+	
+	/* egress should be allowed for all traffic */
 	egress {
-		from_port   = 22
-		to_port     = 22
-		protocol    = "tcp"
-		cidr_blocks = ["${var.aws_inbound_ip_list}"]
-	}		
+		from_port   = 0
+		to_port     = 0
+		protocol    = -1
+		cidr_blocks = ["0.0.0.0/0"]
+	}
 }
 
 resource "aws_security_group" "private" {
@@ -133,19 +131,20 @@ resource "aws_security_group" "private" {
 	description = "security group for private access"
 	vpc_id      = "${aws_vpc.main.id}"
 
-	/* ingress & egress for all traffic of instances within the same sg */		
+	/* ingress for all traffic of instances within the same sg */		
 	ingress {
 		from_port = 0
 		to_port   = 0
 		protocol  = -1
 		self = true
 	}
-	
+
+	/* egress should be for all */
 	egress {
-		from_port = 0
-		to_port   = 0
-		protocol  = -1
-		self      = true
+		from_port   = 0 
+		to_port     = 0 
+		protocol    = -1
+		cidr_blocks = ["0.0.0.0/0"]
 	}
 }	
 
