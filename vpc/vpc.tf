@@ -101,29 +101,6 @@ resource "aws_security_group" "public" {
 	description = "security group for public access"
 	vpc_id      = "${aws_vpc.main.id}"
 	
-	/* ingress for all traffic of instances within the same sg */		
-	ingress {
-		from_port = 0
-		to_port   = 0
-		protocol  = -1
-		self = true
-	}
-	
-  /* access into the public subnet */
-	ingress {
-		from_port   = 22
-		to_port     = 22
-		protocol    = "tcp"
-		cidr_blocks = ["${var.aws_inbound_ip_list}"]
-	}
-	
-	/* egress should be allowed for all traffic */
-	egress {
-		from_port   = 0
-		to_port     = 0
-		protocol    = -1
-		cidr_blocks = ["0.0.0.0/0"]
-	}
 }
 
 resource "aws_security_group" "private" {
@@ -131,37 +108,73 @@ resource "aws_security_group" "private" {
 	description = "security group for private access"
 	vpc_id      = "${aws_vpc.main.id}"
 
-	/* ingress for all traffic of instances within the same sg */		
-	ingress {
-		from_port = 0
-		to_port   = 0
-		protocol  = -1
-		self = true
-	}
-
-	/* egress should be for all */
-	egress {
-		from_port   = 0 
-		to_port     = 0 
-		protocol    = -1
-		cidr_blocks = ["0.0.0.0/0"]
-	}
 }	
 
 /*
-*  Now define the rules for the created public & private SGs to allow traffic to each other 
+*  Public security group rules
+*  ingress from itself, private sg & specified internet ips
+*  egress to all
 */
+resource "aws_security_group_rule" "public-from-self-ingress" {
+		type      = "ingress"
+		from_port = 0
+		to_port   = 0
+		protocol  = -1
+		security_group_id = "${aws_security_group.public.id}"
+		self              = true
+}
+	
+resource "aws_security_group_rule" "public-from-internet-ingress" {
+	type      = "ingress"
+	from_port = 22
+	to_port   = 22
+	protocol  = "tcp"
+	security_group_id = "${aws_security_group.public.id}"
+	cidr_blocks       = ["${var.aws_inbound_ip_list}"]
+}
 
-resource "aws_security_group_rule" "public-to-private-ingress" {
+resource "aws_security_group_rule" "public-from-internet-apps-ingress" {
+	type      = "ingress"
+	from_port = "${var.public_sg_from_port}"
+	to_port   = "${var.public_sg_to_port}"
+	protocol  = "tcp"
+	security_group_id = "${aws_security_group.public.id}"
+	cidr_blocks       = ["${var.aws_inbound_ip_list}"]
+}
+
+resource "aws_security_group_rule" "public-from-private-ingress" {
 	type      = "ingress"
 	from_port = 0
 	to_port   = 0
 	protocol  = -1
 	security_group_id        = "${aws_security_group.public.id}"	
 	source_security_group_id = "${aws_security_group.private.id}"	
+}	
+
+resource "aws_security_group_rule" "public-to-all-egress" {
+	type              = "egress"
+	from_port         = 0
+	to_port           = 0
+	protocol          = -1
+	security_group_id = "${aws_security_group.public.id}"
+	cidr_blocks       = ["0.0.0.0/0"]
 }
 
-resource "aws_security_group_rule" "private-to-public-ingress" {
+/* 
+* private security group rules 
+* ingress from public & itself
+* egress to all
+*/
+resource "aws_security_group_rule" "private-from-self-ingress" {
+	type      = "ingress"
+	from_port = 0
+	to_port   = 0
+	protocol  = -1
+	security_group_id = "${aws_security_group.private.id}"
+	self              = true
+}
+
+resource "aws_security_group_rule" "private-from-public-ingress" {
 	type      = "ingress"
 	from_port = 0
 	to_port   = 0
@@ -169,3 +182,13 @@ resource "aws_security_group_rule" "private-to-public-ingress" {
 	security_group_id        = "${aws_security_group.private.id}"
 	source_security_group_id = "${aws_security_group.public.id}"
 }
+
+resource "aws_security_group_rule" "private-to-all-egress" {	
+    type        = "egress"
+		from_port   = 0 
+		to_port     = 0 
+		protocol    = -1
+		security_group_id = "${aws_security_group.private.id}"		
+		cidr_blocks       = ["0.0.0.0/0"]
+}
+
