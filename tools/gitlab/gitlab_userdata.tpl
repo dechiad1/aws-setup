@@ -12,16 +12,6 @@ DST=$(hostname -i)
 sed -i "s/$SRC/$DST/g" /etc/gitlab/gitlab.rb
 
 gitlab-ctl reconfigure
-#gitlab-ctl start
 
-#apt-get install python
-#apt-get install pip
-#pip install requests
-
-#call python script to setup user & create token
-#TOKEN="stuff"
-#URL="http://127.0.0.1/api/v4"
-
-#PROJECT="test-project"
-
-#curl -X POST --header "Private-Token: $TOKEN" $URL/projects?name=$PROJECT
+#add method to wait for gitlab setup to complete
+#execute python script on localhost
