@@ -13,3 +13,7 @@ output "public_security_group_id" {
 output "private_security_group_id" {
 	value = "${aws_security_group.private.id}"
 }
+
+output "vpc_id" {
+	value = "${aws_vpc.main.id}"
+}
