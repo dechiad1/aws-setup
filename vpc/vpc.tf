@@ -48,19 +48,28 @@ resource "aws_route_table_association" "public-rta" {
 }
 
 /* 
-*  Private subnet
+*  Private subnets
 *  private route table
 *  private route table association
 *  EIP
 *  NAT gateway
 */
-resource "aws_subnet" "private-subnet" {
+resource "aws_subnet" "private-subnet-a" {
     vpc_id            = "${aws_vpc.main.id}"
-    cidr_block        = "${var.aws_subnet_private_cidr_block}"
-    availability_zone = "${var.aws_subnet_private_az}"
+    cidr_block        = "${var.aws_subnet_private_cidr_block_a}"
+    availability_zone = "${var.aws_subnet_private_az_a}"
     tags {
-        Name    = "Private Subnet"
+        Name = "Private Subnet A"
     }
+}
+
+resource "aws_subnet" "private-subnet-b" {
+		vpc_id            = "${aws_vpc.main.id}"
+		cidr_block        = "${var.aws_subnet_private_cidr_block_b}"
+		availability_zone = "${var.aws_subnet_private_az_b}"
+		tags {
+				Name = "Private Subnet B" 
+		}
 }
 
 resource "aws_route_table" "private-rt" {
@@ -74,11 +83,16 @@ resource "aws_route_table" "private-rt" {
 		tags {
         Name = "Private Subnet"
     }
+}	
+
+resource "aws_route_table_association" "private-rta-a" {
+    subnet_id      = "${aws_subnet.private-subnet-a.id}"
+    route_table_id = "${aws_route_table.private-rt.id}"
 }
 
-resource "aws_route_table_association" "private-rta" {
-    subnet_id      = "${aws_subnet.private-subnet.id}"
-    route_table_id = "${aws_route_table.private-rt.id}"
+resource "aws_route_table_association" "private-rta-b" {
+		subnet_id      = "${aws_subnet.private-subnet-b.id}"
+		route_table_id = "${aws_route_table.private-rt.id}"
 }
 
 resource "aws_eip" "nat" {
@@ -122,15 +136,6 @@ resource "aws_security_group_rule" "public-from-self-ingress" {
 		protocol  = -1
 		security_group_id = "${aws_security_group.public.id}"
 		self              = true
-}
-	
-resource "aws_security_group_rule" "public-from-internet-ingress" {
-	type      = "ingress"
-	from_port = 22
-	to_port   = 22
-	protocol  = "tcp"
-	security_group_id = "${aws_security_group.public.id}"
-	cidr_blocks       = ["${var.aws_inbound_ip_list}"]
 }
 
 resource "aws_security_group_rule" "public-from-internet-apps-ingress" {
